@@ -108,3 +108,103 @@ export async function fetchReadme(
   }
   return res.text();
 }
+
+export type GitHubPages = {
+  html_url: string | null;
+  cname: string | null;
+  status: string | null;
+  public: boolean;
+};
+
+/** Returns Pages info, or null when Pages are not enabled (404). */
+export async function fetchRepoPages(
+  token: string,
+  owner: string,
+  name: string
+): Promise<GitHubPages | null> {
+  const res = await fetch(
+    `${API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/pages`,
+    {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    }
+  );
+
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    let message = `Błąd GitHub Pages API (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch {
+      // ignore
+    }
+    throw new GitHubApiError(message, res.status);
+  }
+
+  return res.json() as Promise<GitHubPages>;
+}
+
+const INDEX_CANDIDATES = ['index.html', 'docs/index.html', 'index.htm'] as const;
+
+/** Looks for a root/docs index HTML file on the default branch. */
+export async function findRepoIndexHtml(
+  token: string,
+  owner: string,
+  name: string,
+  defaultBranch: string
+): Promise<string | null> {
+  for (const path of INDEX_CANDIDATES) {
+    const url =
+      `${API_BASE}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}` +
+      `/contents/${path.split('/').map(encodeURIComponent).join('/')}` +
+      `?ref=${encodeURIComponent(defaultBranch)}`;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+
+    if (res.status === 404) continue;
+    if (!res.ok) continue;
+
+    const body = await res.json();
+    // Contents API returns an object for a file, an array for a directory
+    if (body && !Array.isArray(body) && body.type === 'file') {
+      return path;
+    }
+  }
+  return null;
+}
+
+export function buildPagesOpenUrl(
+  pages: GitHubPages,
+  owner: string,
+  name: string
+): string {
+  if (pages.html_url) return pages.html_url;
+  if (pages.cname) {
+    const host = pages.cname.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `https://${host}/`;
+  }
+  return `https://${owner}.github.io/${name}/`;
+}
+
+export function buildHtmlPreviewUrl(
+  owner: string,
+  name: string,
+  defaultBranch: string,
+  path: string
+): string {
+  return (
+    `https://htmlpreview.github.io/?` +
+    `https://github.com/${owner}/${name}/blob/${defaultBranch}/${path}`
+  );
+}

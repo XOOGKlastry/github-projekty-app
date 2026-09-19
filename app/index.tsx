@@ -220,6 +220,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <RepoCard
               repo={item}
+              token={token!}
               onPress={() =>
                 router.push({
                   pathname: '/repo/[owner]/[name]',

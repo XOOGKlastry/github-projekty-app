@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OpenHtmlButton } from '@/components/OpenHtmlButton';
 import { EmptyState, ErrorState, LoadingState } from '@/components/StateViews';
 import { useAuth } from '@/lib/auth';
 import { fetchReadme, fetchRepo } from '@/lib/github';
@@ -124,11 +125,15 @@ export default function RepoDetailScreen() {
             />
           </View>
 
+          {token ? <OpenHtmlButton token={token} repo={repo} variant="primary" /> : null}
+
           <Pressable
             onPress={() => WebBrowser.openBrowserAsync(repo.html_url)}
-            style={[styles.button, { backgroundColor: c.tint }]}
+            style={[styles.buttonSecondary, { borderColor: c.border, backgroundColor: c.card }]}
           >
-            <Text style={styles.buttonText}>Otwórz na GitHub</Text>
+            <Text style={[styles.buttonSecondaryText, { color: c.text }]}>
+              Otwórz na GitHub
+            </Text>
           </Pressable>
 
           <Text style={[styles.section, { color: c.text }]}>README</Text>
@@ -177,12 +182,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 13, flexShrink: 0 },
   infoValue: { fontSize: 13, fontWeight: '600', textAlign: 'right', flex: 1 },
-  button: {
+  buttonSecondary: {
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    borderWidth: 1,
   },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonSecondaryText: { fontWeight: '700', fontSize: 16 },
   section: { fontSize: 18, fontWeight: '800', marginTop: 8 },
   readme: {
     borderWidth: 1,

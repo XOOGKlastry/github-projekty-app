@@ -1,77 +1,84 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { OpenHtmlButton } from '@/components/OpenHtmlButton';
 import { formatDate, formatNumber } from '@/lib/format';
 import { useThemeColors } from '@/lib/theme';
 import type { GitHubRepo } from '@/lib/types';
 
 type Props = {
   repo: GitHubRepo;
+  token: string;
   onPress: () => void;
 };
 
-export function RepoCard({ repo, onPress }: Props) {
+export function RepoCard({ repo, token, onPress }: Props) {
   const c = useThemeColors();
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.card,
         {
           backgroundColor: c.card,
           borderColor: c.border,
-          opacity: pressed ? 0.85 : 1,
         },
       ]}
     >
-      <View style={styles.header}>
-        <Text style={[styles.name, { color: c.text }]} numberOfLines={1}>
-          {repo.name}
-        </Text>
-        <View
-          style={[
-            styles.badge,
-            {
-              backgroundColor: repo.private ? c.warning + '33' : c.success + '33',
-            },
-          ]}
-        >
-          <Text
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, gap: 8 }]}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.name, { color: c.text }]} numberOfLines={1}>
+            {repo.name}
+          </Text>
+          <View
             style={[
-              styles.badgeText,
-              { color: repo.private ? c.warning : c.success },
+              styles.badge,
+              {
+                backgroundColor: repo.private ? c.warning + '33' : c.success + '33',
+              },
             ]}
           >
-            {repo.private ? 'prywatne' : 'publiczne'}
+            <Text
+              style={[
+                styles.badgeText,
+                { color: repo.private ? c.warning : c.success },
+              ]}
+            >
+              {repo.private ? 'prywatne' : 'publiczne'}
+            </Text>
+          </View>
+        </View>
+
+        {repo.description ? (
+          <Text style={[styles.desc, { color: c.textSecondary }]} numberOfLines={2}>
+            {repo.description}
+          </Text>
+        ) : (
+          <Text style={[styles.desc, { color: c.textSecondary, fontStyle: 'italic' }]}>
+            Brak opisu
+          </Text>
+        )}
+
+        <View style={styles.meta}>
+          <Text style={[styles.metaText, { color: c.textSecondary }]}>
+            {repo.language ?? '—'}
+          </Text>
+          <Text style={[styles.metaText, { color: c.textSecondary }]}>
+            ★ {formatNumber(repo.stargazers_count)}
+          </Text>
+          <Text style={[styles.metaText, { color: c.textSecondary }]}>
+            ⑂ {formatNumber(repo.forks_count)}
           </Text>
         </View>
-      </View>
+        <Text style={[styles.updated, { color: c.textSecondary }]}>
+          Aktualizacja: {formatDate(repo.updated_at)}
+        </Text>
+      </Pressable>
 
-      {repo.description ? (
-        <Text style={[styles.desc, { color: c.textSecondary }]} numberOfLines={2}>
-          {repo.description}
-        </Text>
-      ) : (
-        <Text style={[styles.desc, { color: c.textSecondary, fontStyle: 'italic' }]}>
-          Brak opisu
-        </Text>
-      )}
-
-      <View style={styles.meta}>
-        <Text style={[styles.metaText, { color: c.textSecondary }]}>
-          {repo.language ?? '—'}
-        </Text>
-        <Text style={[styles.metaText, { color: c.textSecondary }]}>
-          ★ {formatNumber(repo.stargazers_count)}
-        </Text>
-        <Text style={[styles.metaText, { color: c.textSecondary }]}>
-          ⑂ {formatNumber(repo.forks_count)}
-        </Text>
-      </View>
-      <Text style={[styles.updated, { color: c.textSecondary }]}>
-        Aktualizacja: {formatDate(repo.updated_at)}
-      </Text>
-    </Pressable>
+      <OpenHtmlButton token={token} repo={repo} variant="compact" />
+    </View>
   );
 }
 
@@ -81,7 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,
-    gap: 8,
+    gap: 10,
   },
   header: {
     flexDirection: 'row',
